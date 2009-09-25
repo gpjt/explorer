@@ -24,6 +24,43 @@ class WorldObject(object):
         glPopMatrix()
 
 
+    def offset(self, offsetX, offsetY, offsetZ):
+        x, y, z = self.location
+        return x + offsetX, y + offsetY, z + offsetZ
+
+
+
+class Sun(WorldObject):
+
+    def __init__(self, location):
+        WorldObject.__init__(self, location)
+        #self.radius = 1392000
+        self.radius = 1392
+        self.color = (1., 1., 0.5)
+        self.lightNum = GL_LIGHT0
+
+    def draw(self):
+        quad = gluNewQuadric()
+
+        gluQuadricOrientation(quad, GLU_OUTSIDE)
+
+        r, g, b = self.color
+        
+        lightAmbient = ((r / 3., g / 3., b / 3., 1.))
+        lightDiffuse = ((r, g, b, 1.))
+        lightPosition = ((0, 0, 0, 1.))
+        glLightfv(self.lightNum, GL_AMBIENT, lightAmbient)
+        glLightfv(self.lightNum, GL_DIFFUSE, lightDiffuse)
+        glLightfv(self.lightNum, GL_POSITION, lightPosition)
+        glEnable(self.lightNum)
+        glEnable(GL_LIGHTING)
+
+        glMaterialfv(GL_FRONT, GL_EMISSION, self.color)
+        
+        gluSphere(quad, self.radius, 40, 40)
+        
+        gluDeleteQuadric(quad)
+
 
 class Earth(WorldObject):
 
@@ -52,7 +89,11 @@ class Earth(WorldObject):
         gluQuadricOrientation(quad, GLU_OUTSIDE)
         gluQuadricTexture(quad, GL_TRUE)
         
-        glColor3f(1., 1., 1.)
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (0.2, 0.2, 0.2, 1));
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (1, 1, 1, 1));
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (1, 1, 1, 1));
+        glMaterialf(GL_FRONT, GL_SHININESS, 0);
+        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
         
         glBindTexture(GL_TEXTURE_2D, self.texture)
         gluSphere(quad, self.radius, 40, 40)
@@ -67,6 +108,32 @@ class UserSpaceship(WorldObject):
         self.cameraDistance = cameraDistance
         self.cameraYaw = cameraYaw
         self.cameraPitch = cameraPitch
+
+
+    def normaliseAngle(self, value):
+        if value > math.pi:
+            value = -((math.pi * 2) - value)
+        if value < -math.pi:
+            value = (math.pi * 2) + value
+        return value        
+
+
+    @property
+    def cameraYaw(self):
+        return self.__cameraYaw
+
+    @cameraYaw.setter
+    def cameraYaw(self, value):
+        self.__cameraYaw = self.normaliseAngle(value)
+
+        
+    @property
+    def cameraPitch(self):
+        return self.__cameraPitch
+
+    @cameraPitch.setter
+    def cameraPitch(self, value):
+        self.__cameraPitch = self.normaliseAngle(value)
 
         
     def draw(self):
@@ -83,6 +150,11 @@ class UserSpaceship(WorldObject):
         glTranslatef(0, 0, -(length / 2))
 
         glColor3f(1., 0., 0.)
+
+        # End-cap
+        gluDisk(quad, 0, baseRadius, 30, 30)
+
+        # Cone
         gluCylinder(quad, baseRadius, 0, length, 30, 30)
         
         gluDeleteQuadric(quad)
@@ -109,7 +181,7 @@ class UI(object):
         self.fovV = 45
 
         self.minClipping = 0.1
-        self.maxClipping = 100000
+        self.maxClipping = 5000000000000
 
         self.done = False
         self.dragging = False
@@ -137,11 +209,15 @@ class UI(object):
 
 
     def initUniverse(self):
-        self.userSpaceship = UserSpaceship((0, 0, 19999), 0.2, 0, 0)
-        self.universe.append(self.userSpaceship)
+        sun = Sun((0, 0, 0))
+        self.universe.append(sun)
 
-        earth = Earth((0, 0, 0))    
+        #earth = Earth(sun.offset(1000000, 1000000, 149600000))
+        earth = Earth(sun.offset(10000, 0, 0))
         self.universe.append(earth)
+
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.2, 0, 0)
+        self.universe.append(self.userSpaceship)
 
 
 
@@ -200,7 +276,7 @@ class UI(object):
         glLoadIdentity()
         cX, cY, cZ = self.userSpaceship.getCameraPos()
         glRotatef(math.degrees(-self.userSpaceship.cameraYaw), 0, 1, 0)
-        glRotatef(math.degrees(self.userSpaceship.cameraPitch), 1, 0, 0)
+        glRotatef(math.degrees(-self.userSpaceship.cameraPitch), 1, 0, 0)
         glTranslatef(-cX, -cY, -cZ)
         
         for obj in self.universe:
