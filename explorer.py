@@ -74,8 +74,16 @@ class UserSpaceship(WorldObject):
 
         gluQuadricOrientation(quad, GLU_OUTSIDE)
 
+        length = 0.1
+        baseRadius = 0.02
+
+        # Cones grow up the +Z axis, with the base at Z=0.  So in order
+        # to make the centre of ours the centre of this object, we move
+        # back half the length
+        glTranslatef(0, 0, -(length / 2))
+
         glColor3f(1., 0., 0.)
-        gluCylinder(quad, 0.02, 0, 0.1, 10, 10)
+        gluCylinder(quad, baseRadius, 0, length, 30, 30)
         
         gluDeleteQuadric(quad)
 
@@ -165,8 +173,8 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.userSpaceship.cameraPitch -= float(deltaY) / 100
-            self.userSpaceship.cameraYaw -= float(deltaX) / 100
+            self.userSpaceship.cameraPitch -= float(deltaY) / 300
+            self.userSpaceship.cameraYaw -= float(deltaX) / 300
             self.dragLastEvent = nowX, nowY
 
 
