@@ -9,6 +9,20 @@ from os import path
 import math
 
 
+
+def LoadTexture(filename):
+    textureSurface = pygame.image.load(filename)
+    textureData = pygame.image.tostring(textureSurface, "RGBX", 1)
+
+    texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, textureSurface.get_width(), textureSurface.get_height(),
+                      GL_RGBA, GL_UNSIGNED_BYTE, textureData)
+    return texture    
+
+
 class WorldObject(object):
 
     def __init__(self, location):
@@ -33,16 +47,19 @@ class WorldObject(object):
 
 class Sun(WorldObject):
 
-    def __init__(self, location):
+    def __init__(self, location, color=(1., 1., 0.5)):
         WorldObject.__init__(self, location)
         self.radius = 1392000
-        self.color = (1., 1., 0.5)
+        self.color = color
         self.lightNum = GL_LIGHT0
+
 
     def draw(self):
         quad = gluNewQuadric()
 
         gluQuadricOrientation(quad, GLU_OUTSIDE)
+        gluQuadricTexture(quad, GL_FALSE)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
         r, g, b = self.color
         
@@ -55,8 +72,12 @@ class Sun(WorldObject):
         glEnable(self.lightNum)
         glEnable(GL_LIGHTING)
 
+        glMaterialfv(GL_FRONT, GL_AMBIENT, self.color);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, self.color);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, self.color);
+        glMaterialf(GL_FRONT, GL_SHININESS, 1);
         glMaterialfv(GL_FRONT, GL_EMISSION, self.color)
-        
+
         gluSphere(quad, self.radius, 40, 40)
         
         gluDeleteQuadric(quad)
@@ -67,20 +88,7 @@ class Earth(WorldObject):
     def __init__(self, location):
         WorldObject.__init__(self, location)
         self.radius = 6371
-        self.texture = self.loadTexture()       
-
-
-    def loadTexture(self):
-        textureSurface = pygame.image.load("envisat-earth.jpg")
-        textureData = pygame.image.tostring(textureSurface, "RGBX", 1)
-
-        texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, texture)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, textureSurface.get_width(), textureSurface.get_height(),
-                          GL_RGBA, GL_UNSIGNED_BYTE, textureData)
-        return texture
+        self.texture = LoadTexture("envisat-earth.jpg")
         
 
     def draw(self):
@@ -99,6 +107,41 @@ class Earth(WorldObject):
         gluSphere(quad, self.radius, 40, 40)
         
         gluDeleteQuadric(quad)
+
+
+class SurroundingSky(WorldObject):
+    
+    def __init__(self):
+        WorldObject.__init__(self, (0, 0, 0))
+        self.radius = 10000000
+        self.texture = LoadTexture("gigapixel-milky-way.jpg")    
+
+
+    def positionAndDraw(self, offsetX, offsetY, offsetZ):
+        # Ignore offsets.
+        glPushMatrix()
+        
+        glDisable(GL_DEPTH_TEST) 
+
+        quad = gluNewQuadric()
+
+        gluQuadricOrientation(quad, GLU_INSIDE)
+        gluQuadricTexture(quad, GL_TRUE)
+        
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (0, 0, 0, 0));
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (0, 0, 0, 0));
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (0, 0, 0, 0));
+        glMaterialf(GL_FRONT, GL_SHININESS, 0);
+        glMaterialfv(GL_FRONT, GL_EMISSION, (1, 1, 1, 1));
+        
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+        gluSphere(quad, self.radius, 40, 40)
+        
+        gluDeleteQuadric(quad)
+
+        glEnable(GL_DEPTH_TEST) 
+
+        glPopMatrix()
 
 
 class UserSpaceship(WorldObject):
@@ -209,15 +252,20 @@ class UI(object):
 
 
     def initUniverse(self):
+        sky = SurroundingSky()
+
         sun = Sun((0, 0, 0))
-        self.universe.append(sun)
 
         earth = Earth(sun.offset(149600000, 0, 0))
-        self.universe.append(earth)
 
         self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.2, 0, 0)
-        self.universe.append(self.userSpaceship)
 
+
+        self.universe.append(sky)
+        self.universe.append(sun)
+        self.universe.append(earth)
+        self.universe.append(self.userSpaceship)
+    
 
 
     def handleKeys(self, key):
