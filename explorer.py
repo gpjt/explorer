@@ -9,6 +9,11 @@ from os import path
 import math
 
 
+# Gravitational constant
+G = 6.67428 * 10**-11
+
+
+
 class SurroundingSky(object):
     
     def __init__(self):
@@ -58,8 +63,10 @@ def LoadTexture(filename):
 
 class WorldObject(object):
 
-    def __init__(self, location):
+    def __init__(self, mass, location, velocity):
+        self.mass = mass
         self.location = location
+        self.velocity = velocity
 
     def positionAndDraw(self, offsetX, offsetY, offsetZ):
         glPushMatrix()
@@ -80,10 +87,10 @@ class WorldObject(object):
 
 class Sun(WorldObject):
 
-    def __init__(self, location, color=(1., 1., 0.5)):
-        WorldObject.__init__(self, location)
+    def __init__(self, location, velocity):
+        WorldObject.__init__(self, 1.9891 * 10**30, location, velocity)
         self.radius = 1392000
-        self.color = color
+        self.color = (1., 1., 0.5)
         self.lightNum = GL_LIGHT0
 
 
@@ -118,8 +125,8 @@ class Sun(WorldObject):
 
 class Earth(WorldObject):
 
-    def __init__(self, location):
-        WorldObject.__init__(self, location)
+    def __init__(self, location, velocity):
+        WorldObject.__init__(self, 5.9736 * 10**24, location, velocity)
         self.radius = 6371
         self.texture = LoadTexture("envisat-earth.jpg")
         
@@ -143,6 +150,10 @@ class Earth(WorldObject):
 
 
 class UserSpaceship(WorldObject):
+
+    def __init__(self, location, velocity):
+        WorldObject.__init__(self, 1000000, location, velocity)
+
 
     def draw(self):
         quad = gluNewQuadric()
@@ -178,11 +189,17 @@ class Universe(object):
     def __init__(self):
         self.sky = SurroundingSky()
 
-        sun = Sun((0, 0, 0))
+        sun = Sun((0, 0, 0), (0, 0, 0))
 
-        earth = Earth(sun.offset(149600000, 0, 0))
+        earth = Earth(sun.offset(149600000, 0, 0), (0, 0, 0))
 
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999))
+        # Some interesting values:
+        #  Distant orbit
+        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (-4.4667, 0, 0))
+        #  Roughly as high as the ISS
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
+        #  GEO
+        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 42164), (-3.07, 0, 0))
 
         self.objects = []
         self.objects.append(sun)
@@ -212,11 +229,64 @@ class Universe(object):
             obj.positionAndDraw(-cX, -cY, -cZ)
 
 
-    def accelerateAndMove(self):
-        pass
+    def accelerateAndMove(self, time):
+        for objectToMove in self.objects:
+            acceleration = (0, 0, 0)
+            for attractiveObject in self.objects:
+                if objectToMove == attractiveObject:
+                    continue
 
+                # Calculate displacement in meters (for compatibility with G)
+                displacement = (
+                    (objectToMove.location[0] - attractiveObject.location[0]) * 1000,
+                    (objectToMove.location[1] - attractiveObject.location[1]) * 1000,
+                    (objectToMove.location[2] - attractiveObject.location[2]) * 1000
+                )
+                distanceSquared = displacement[0] ** 2 + displacement[1] ** 2 + displacement[2] ** 2
+                # F=ma => a = F/m, and F = -GMm/r**2, so we can cancel out m to get acceleration
+                scalarAcceleration = - (G * attractiveObject.mass) / distanceSquared
+                distance = math.sqrt(distanceSquared)
+                if type(objectToMove) == UserSpaceship and type(attractiveObject) == Earth:
+                    print attractiveObject, distance, scalarAcceleration
+                unitDisplacement = (
+                    displacement[0] / distance,
+                    displacement[1] / distance,
+                    displacement[2] / distance,
+                )
+                aX, aY, aZ = acceleration
+                acceleration = (
+                    aX + scalarAcceleration * unitDisplacement[0],
+                    aY + scalarAcceleration * unitDisplacement[1],
+                    aZ + scalarAcceleration * unitDisplacement[2]
+                )             
 
+            # Because all of the calculations above were in meters, we now have acceleration in
+            # ms**-2.  Convert to km to fit our normal units...
+            aX, aY, aZ = acceleration
+            aX /= 1000
+            aY /= 1000
+            aZ /= 1000
 
+            x, y, z = objectToMove.location
+            vX, vY, vZ = objectToMove.velocity
+
+            
+            # s = ut + 0.5at**2
+            timeSquared = time ** 2
+            objectToMove.location = (
+                x + vX * time + 0.5 * aX * timeSquared,
+                y + vY * time + 0.5 * aY * timeSquared,
+                z + vZ * time + 0.5 * aZ * timeSquared
+            )
+
+            # v = u + at
+            objectToMove.velocity = (
+                vX + aX * time,
+                vY + aY * time,
+                vZ + aZ * time
+            )
+                
+                
 
 class UI(object):
 
@@ -364,12 +434,15 @@ class UI(object):
 
             frames = 0
             ticks = pygame.time.get_ticks()
+            lastTicks = ticks
             while not self.done:
                 self.handleEvent()
                 self.draw()
-                self.universe.accelerateAndMove()
+                currentTicks = pygame.time.get_ticks()
+                self.universe.accelerateAndMove(float(currentTicks - lastTicks) / 1000)
                 pygame.display.flip()
                 frames += 1
+                lastTicks = currentTicks
 
             print "fps:  %d" % ((frames * 1000) / (pygame.time.get_ticks() - ticks))
 
