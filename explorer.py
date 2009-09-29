@@ -200,6 +200,9 @@ class Universe(object):
         self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
         #  GEO
         # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 42164), (-3.07, 0, 0))
+        #  Here's a good resource for finding velocity for a circular orbit at a given altitude,
+        #  though you need to remember that it's altitude and not distance from the centre of the
+        #  Earth: <http://home.att.net/~ntdoug/UCM2.html>
 
         self.objects = []
         self.objects.append(sun)
