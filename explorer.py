@@ -14,10 +14,11 @@ class WorldObject(object):
     def __init__(self, location):
         self.location = location
 
-    def positionAndDraw(self):
+    def positionAndDraw(self, offsetX, offsetY, offsetZ):
         glPushMatrix()
 
-        glTranslatef(*self.location)
+        x, y, z = self.location
+        glTranslatef(x + offsetX, y + offsetY, z + offsetZ)
 
         self.draw()
 
@@ -34,8 +35,7 @@ class Sun(WorldObject):
 
     def __init__(self, location):
         WorldObject.__init__(self, location)
-        #self.radius = 1392000
-        self.radius = 1392
+        self.radius = 1392000
         self.color = (1., 1., 0.5)
         self.lightNum = GL_LIGHT0
 
@@ -212,8 +212,7 @@ class UI(object):
         sun = Sun((0, 0, 0))
         self.universe.append(sun)
 
-        #earth = Earth(sun.offset(1000000, 1000000, 149600000))
-        earth = Earth(sun.offset(10000, 0, 0))
+        earth = Earth(sun.offset(149600000, 0, 0))
         self.universe.append(earth)
 
         self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.2, 0, 0)
@@ -277,10 +276,22 @@ class UI(object):
         cX, cY, cZ = self.userSpaceship.getCameraPos()
         glRotatef(math.degrees(-self.userSpaceship.cameraYaw), 0, 1, 0)
         glRotatef(math.degrees(-self.userSpaceship.cameraPitch), 1, 0, 0)
-        glTranslatef(-cX, -cY, -cZ)
-        
+
+        # In a normal OpenGL scene, we'd now do something like this:
+        #   glTranslatef(-cX, -cY, -cZ)
+        # and then tell all of our objects to draw themselves at their
+        # world location.  However, this leads to weird jiggling effects
+        # because of rounding.  For example, if the universe has the Sun
+        # at (0, 0, 0) and then the user's spaceship is at (0, 0, 93000000)
+        # and all objects are posistioned with a fixed number of significant
+        # figures, then the Sun is positioned precisely in the right place
+        # but the spaceship might be misplaced by a meter or so -- so it
+        # starts jiggling around.  It's better to have objects that are
+        # close to the camera close to the origin so that nearby objects
+        # are positioned accurately, and distant ones can be out.
+                 
         for obj in self.universe:
-            obj.positionAndDraw()
+            obj.positionAndDraw(-cX, -cY, -cZ)
 
 
     def main(self):
