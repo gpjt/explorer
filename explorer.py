@@ -9,6 +9,39 @@ from os import path
 import math
 
 
+class SurroundingSky(object):
+    
+    def __init__(self):
+        self.radius = 10000000
+        self.texture = LoadTexture("gigapixel-milky-way.jpg")    
+
+
+    def draw(self):
+        glPushMatrix()
+        
+        glDisable(GL_DEPTH_TEST) 
+
+        quad = gluNewQuadric()
+
+        gluQuadricOrientation(quad, GLU_INSIDE)
+        gluQuadricTexture(quad, GL_TRUE)
+        
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (0, 0, 0, 0));
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (0, 0, 0, 0));
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (0, 0, 0, 0));
+        glMaterialf(GL_FRONT, GL_SHININESS, 0);
+        glMaterialfv(GL_FRONT, GL_EMISSION, (1, 1, 1, 1));
+        
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+        gluSphere(quad, self.radius, 40, 40)
+        
+        gluDeleteQuadric(quad)
+
+        glEnable(GL_DEPTH_TEST) 
+
+        glPopMatrix()
+
+
 
 def LoadTexture(filename):
     textureSurface = pygame.image.load(filename)
@@ -109,41 +142,6 @@ class Earth(WorldObject):
         gluDeleteQuadric(quad)
 
 
-class SurroundingSky(WorldObject):
-    
-    def __init__(self):
-        WorldObject.__init__(self, (0, 0, 0))
-        self.radius = 10000000
-        self.texture = LoadTexture("gigapixel-milky-way.jpg")    
-
-
-    def positionAndDraw(self, offsetX, offsetY, offsetZ):
-        # Ignore offsets.
-        glPushMatrix()
-        
-        glDisable(GL_DEPTH_TEST) 
-
-        quad = gluNewQuadric()
-
-        gluQuadricOrientation(quad, GLU_INSIDE)
-        gluQuadricTexture(quad, GL_TRUE)
-        
-        glMaterialfv(GL_FRONT, GL_AMBIENT, (0, 0, 0, 0));
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, (0, 0, 0, 0));
-        glMaterialfv(GL_FRONT, GL_SPECULAR, (0, 0, 0, 0));
-        glMaterialf(GL_FRONT, GL_SHININESS, 0);
-        glMaterialfv(GL_FRONT, GL_EMISSION, (1, 1, 1, 1));
-        
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-        gluSphere(quad, self.radius, 40, 40)
-        
-        gluDeleteQuadric(quad)
-
-        glEnable(GL_DEPTH_TEST) 
-
-        glPopMatrix()
-
-
 class UserSpaceship(WorldObject):
 
     def __init__(self, location, cameraDistance, cameraYaw, cameraPitch):
@@ -216,6 +214,7 @@ class UI(object):
 
     def __init__(self):
         self.userSpaceship = None
+        self.sky = None
         self.universe = []
 
         self.resolution = (1280, 1024)
@@ -252,7 +251,7 @@ class UI(object):
 
 
     def initUniverse(self):
-        sky = SurroundingSky()
+        self.sky = SurroundingSky()
 
         sun = Sun((0, 0, 0))
 
@@ -260,8 +259,6 @@ class UI(object):
 
         self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.2, 0, 0)
 
-
-        self.universe.append(sky)
         self.universe.append(sun)
         self.universe.append(earth)
         self.universe.append(self.userSpaceship)
@@ -325,6 +322,10 @@ class UI(object):
         glRotatef(math.degrees(-self.userSpaceship.cameraYaw), 0, 1, 0)
         glRotatef(math.degrees(-self.userSpaceship.cameraPitch), 1, 0, 0)
 
+        # Draw the sky separately...
+        if self.sky:
+            self.sky.draw()
+        
         # In a normal OpenGL scene, we'd now do something like this:
         #   glTranslatef(-cX, -cY, -cZ)
         # and then tell all of our objects to draw themselves at their
