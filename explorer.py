@@ -195,9 +195,9 @@ class Universe(object):
 
         # Some interesting values:
         #  Distant orbit
-        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (-4.4667, 0, 0))
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (-4.4667, 0, 0))
         #  Roughly as high as the ISS
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
+        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
         #  GEO
         # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 42164), (-3.07, 0, 0))
         #  Here's a good resource for finding velocity for a circular orbit at a given altitude,
@@ -249,8 +249,6 @@ class Universe(object):
                 # F=ma => a = F/m, and F = -GMm/r**2, so we can cancel out m to get acceleration
                 scalarAcceleration = - (G * attractiveObject.mass) / distanceSquared
                 distance = math.sqrt(distanceSquared)
-                if type(objectToMove) == UserSpaceship and type(attractiveObject) == Earth:
-                    print attractiveObject, distance, scalarAcceleration
                 unitDisplacement = (
                     displacement[0] / distance,
                     displacement[1] / distance,
