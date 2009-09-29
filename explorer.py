@@ -190,6 +190,10 @@ class UserSpaceship(WorldObject):
         # back half the length
         glTranslatef(0, 0, -(length / 2))
 
+        # ...and then in order to make it point away from us, we rotate
+        # around by 180 degrees.
+        glRotatef(180, 0, 1, 0)
+
         glColor3f(1., 0., 0.)
 
         # End-cap
