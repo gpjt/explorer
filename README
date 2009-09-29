@@ -1,1 +1,6 @@
 A simple space simulator
+
+Requires: 
+
+* PyOpenGL: <http://pyopengl.sourceforge.net/>
+* pygame: <http://www.pygame.org/>
