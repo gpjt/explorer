@@ -189,43 +189,8 @@ class Universe(object):
         self.objects.append(earth)
         self.objects.append(self.userSpaceship)
             
-        self.cameraDistance = 0.6
-        self.cameraYaw = 0
-        self.cameraPitch = 0
-
-
-    def normaliseAngle(self, value):
-        if value > math.pi:
-            value = -((math.pi * 2) - value)
-        if value < -math.pi:
-            value = (math.pi * 2) + value
-        return value        
-
-
-    @property
-    def cameraYaw(self):
-        return self.__cameraYaw
-
-    @cameraYaw.setter
-    def cameraYaw(self, value):
-        self.__cameraYaw = self.normaliseAngle(value)
-
-        
-    @property
-    def cameraPitch(self):
-        return self.__cameraPitch
-
-    @cameraPitch.setter
-    def cameraPitch(self, value):
-        self.__cameraPitch = self.normaliseAngle(value)
-
-        
 
     def draw(self):
-        glTranslatef(0, 0, -self.cameraDistance)
-        glRotatef(math.degrees(-self.cameraYaw), 0, 1, 0)
-        glRotatef(math.degrees(-self.cameraPitch), 1, 0, 0)
-
         # Draw the sky separately...
         if self.sky:
             self.sky.draw()
@@ -268,7 +233,37 @@ class UI(object):
         self.dragging = False
         self.dragLastEvent = None
 
+        self.cameraDistance = 0.6
+        self.cameraYaw = 0
+        self.cameraPitch = 0
 
+
+    def normaliseAngle(self, value):
+        if value > math.pi:
+            value = -((math.pi * 2) - value)
+        if value < -math.pi:
+            value = (math.pi * 2) + value
+        return value        
+
+
+    @property
+    def cameraYaw(self):
+        return self.__cameraYaw
+
+    @cameraYaw.setter
+    def cameraYaw(self, value):
+        self.__cameraYaw = self.normaliseAngle(value)
+
+        
+    @property
+    def cameraPitch(self):
+        return self.__cameraPitch
+
+    @cameraPitch.setter
+    def cameraPitch(self, value):
+        self.__cameraPitch = self.normaliseAngle(value)
+
+    
     def resize(self, width, height):
         if height == 0:
             height = 1.0
@@ -299,10 +294,10 @@ class UI(object):
             self.dragLastEvent = pygame.mouse.get_pos()
         if event.button == 4:
             # Mouse wheel roll up
-            self.universe.cameraDistance -= 0.01
+            self.cameraDistance -= 0.01
         elif event.button == 5:
             # Mouse wheel roll down
-            self.universe.cameraDistance += 0.01            
+            self.cameraDistance += 0.01            
 
 
     def handleMouseup(self, event):
@@ -317,8 +312,8 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.universe.cameraPitch -= float(deltaY) / 300
-            self.universe.cameraYaw -= float(deltaX) / 300
+            self.cameraPitch -= float(deltaY) / 300
+            self.cameraYaw -= float(deltaX) / 300
             self.dragLastEvent = nowX, nowY
 
 
@@ -341,6 +336,10 @@ class UI(object):
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
+        
+        glTranslatef(0, 0, -self.cameraDistance)
+        glRotatef(math.degrees(-self.cameraYaw), 0, 1, 0)
+        glRotatef(math.degrees(-self.cameraPitch), 1, 0, 0)
         
         self.universe.draw()
 
