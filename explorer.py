@@ -134,6 +134,10 @@ class Earth(WorldObject):
     def draw(self):
         quad = gluNewQuadric()
 
+        # By default we'd wind up with the north pole facing the +ve
+        # Z axis, which would be toward us normally.
+        glRotatef(-90, 1, 0, 0)
+
         gluQuadricOrientation(quad, GLU_OUTSIDE)
         gluQuadricTexture(quad, GL_TRUE)
         
