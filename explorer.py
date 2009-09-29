@@ -144,39 +144,6 @@ class Earth(WorldObject):
 
 class UserSpaceship(WorldObject):
 
-    def __init__(self, location, cameraDistance, cameraYaw, cameraPitch):
-        WorldObject.__init__(self, location)
-        self.cameraDistance = cameraDistance
-        self.cameraYaw = cameraYaw
-        self.cameraPitch = cameraPitch
-
-
-    def normaliseAngle(self, value):
-        if value > math.pi:
-            value = -((math.pi * 2) - value)
-        if value < -math.pi:
-            value = (math.pi * 2) + value
-        return value        
-
-
-    @property
-    def cameraYaw(self):
-        return self.__cameraYaw
-
-    @cameraYaw.setter
-    def cameraYaw(self, value):
-        self.__cameraYaw = self.normaliseAngle(value)
-
-        
-    @property
-    def cameraPitch(self):
-        return self.__cameraPitch
-
-    @cameraPitch.setter
-    def cameraPitch(self, value):
-        self.__cameraPitch = self.normaliseAngle(value)
-
-        
     def draw(self):
         quad = gluNewQuadric()
 
@@ -206,13 +173,89 @@ class UserSpaceship(WorldObject):
 
 
 
+class Universe(object):
+
+    def __init__(self):
+        self.sky = SurroundingSky()
+
+        sun = Sun((0, 0, 0))
+
+        earth = Earth(sun.offset(149600000, 0, 0))
+
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999))
+
+        self.objects = []
+        self.objects.append(sun)
+        self.objects.append(earth)
+        self.objects.append(self.userSpaceship)
+            
+        self.cameraDistance = 0.6
+        self.cameraYaw = 0
+        self.cameraPitch = 0
+
+
+    def normaliseAngle(self, value):
+        if value > math.pi:
+            value = -((math.pi * 2) - value)
+        if value < -math.pi:
+            value = (math.pi * 2) + value
+        return value        
+
+
+    @property
+    def cameraYaw(self):
+        return self.__cameraYaw
+
+    @cameraYaw.setter
+    def cameraYaw(self, value):
+        self.__cameraYaw = self.normaliseAngle(value)
+
+        
+    @property
+    def cameraPitch(self):
+        return self.__cameraPitch
+
+    @cameraPitch.setter
+    def cameraPitch(self, value):
+        self.__cameraPitch = self.normaliseAngle(value)
+
+        
+
+    def draw(self):
+        glTranslatef(0, 0, -self.cameraDistance)
+        glRotatef(math.degrees(-self.cameraYaw), 0, 1, 0)
+        glRotatef(math.degrees(-self.cameraPitch), 1, 0, 0)
+
+        # Draw the sky separately...
+        if self.sky:
+            self.sky.draw()
+        
+        # In a normal OpenGL scene, we'd now do something like this:
+        #   glTranslatef(-cX, -cY, -cZ)
+        # and then tell all of our objects to draw themselves at their
+        # world location.  However, this leads to weird jiggling effects
+        # because of rounding.  For example, if the universe has the Sun
+        # at (0, 0, 0) and then the user's spaceship is at (0, 0, 93000000)
+        # and all objects are posistioned with a fixed number of significant
+        # figures, then the Sun is positioned precisely in the right place
+        # but the spaceship might be misplaced by a meter or so -- so it
+        # starts jiggling around.  It's better to have objects that are
+        # close to the camera close to the origin so that nearby objects
+        # are positioned accurately, and distant ones can be out.
+        cX, cY, cZ = self.userSpaceship.location
+        for obj in self.objects:
+            obj.positionAndDraw(-cX, -cY, -cZ)
+
+
+    def accelerateAndMove(self):
+        pass
+
+
+
+
 class UI(object):
 
     def __init__(self):
-        self.userSpaceship = None
-        self.sky = None
-        self.universe = []
-
         self.resolution = (1280, 1024)
 
         # Vertical field of view
@@ -246,21 +289,6 @@ class UI(object):
         glEnable(GL_TEXTURE_2D)
 
 
-    def initUniverse(self):
-        self.sky = SurroundingSky()
-
-        sun = Sun((0, 0, 0))
-
-        earth = Earth(sun.offset(149600000, 0, 0))
-
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.6, 0, 0.0)
-
-        self.universe.append(sun)
-        self.universe.append(earth)
-        self.universe.append(self.userSpaceship)
-    
-
-
     def handleKeys(self, key):
         pass        
 
@@ -271,10 +299,10 @@ class UI(object):
             self.dragLastEvent = pygame.mouse.get_pos()
         if event.button == 4:
             # Mouse wheel roll up
-            self.userSpaceship.cameraDistance -= 0.01
+            self.universe.cameraDistance -= 0.01
         elif event.button == 5:
             # Mouse wheel roll down
-            self.userSpaceship.cameraDistance += 0.01            
+            self.universe.cameraDistance += 0.01            
 
 
     def handleMouseup(self, event):
@@ -289,8 +317,8 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.userSpaceship.cameraPitch -= float(deltaY) / 300
-            self.userSpaceship.cameraYaw -= float(deltaX) / 300
+            self.universe.cameraPitch -= float(deltaY) / 300
+            self.universe.cameraYaw -= float(deltaX) / 300
             self.dragLastEvent = nowX, nowY
 
 
@@ -312,31 +340,9 @@ class UI(object):
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
         glLoadIdentity()
-        glTranslatef(0, 0, -self.userSpaceship.cameraDistance)
-        glRotatef(math.degrees(-self.userSpaceship.cameraYaw), 0, 1, 0)
-        glRotatef(math.degrees(-self.userSpaceship.cameraPitch), 1, 0, 0)
-
-        # Draw the sky separately...
-        if self.sky:
-            self.sky.draw()
         
-        # In a normal OpenGL scene, we'd now do something like this:
-        #   glTranslatef(-cX, -cY, -cZ)
-        # and then tell all of our objects to draw themselves at their
-        # world location.  However, this leads to weird jiggling effects
-        # because of rounding.  For example, if the universe has the Sun
-        # at (0, 0, 0) and then the user's spaceship is at (0, 0, 93000000)
-        # and all objects are posistioned with a fixed number of significant
-        # figures, then the Sun is positioned precisely in the right place
-        # but the spaceship might be misplaced by a meter or so -- so it
-        # starts jiggling around.  It's better to have objects that are
-        # close to the camera close to the origin so that nearby objects
-        # are positioned accurately, and distant ones can be out.
-        cX, cY, cZ = self.userSpaceship.location
-        for obj in self.universe:
-            obj.positionAndDraw(-cX, -cY, -cZ)
+        self.universe.draw()
 
 
     def main(self):
@@ -355,13 +361,14 @@ class UI(object):
 
             self.resize(width, height)
             self.initGL()
-            self.initUniverse()
+            self.universe = Universe()
 
             frames = 0
             ticks = pygame.time.get_ticks()
             while not self.done:
                 self.handleEvent()
                 self.draw()
+                self.universe.accelerateAndMove()
                 pygame.display.flip()
                 frames += 1
 
