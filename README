@@ -1,6 +1,14 @@
 A simple space simulator
 
 Requires: 
+========
 
 * PyOpenGL: <http://pyopengl.sourceforge.net/>
 * pygame: <http://www.pygame.org/>
+
+
+Sources:
+=======
+
+* The satellite photography of the Earth is (c) the ESA, see <http://www.esa.int/esaEO/SEMGSY2IU7E_index_0.html>
+* The background image of the night sky is from <http://www.gigagalaxyzoom.org/>, credit: ESO/S. Guisard
