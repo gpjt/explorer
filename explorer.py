@@ -201,14 +201,6 @@ class UserSpaceship(WorldObject):
         gluDeleteQuadric(quad)
 
 
-    def getCameraPos(self):
-        x, y, z = self.location
-        deltaX = self.cameraDistance * math.cos(self.cameraPitch) * math.sin(self.cameraYaw)
-        deltaY = self.cameraDistance * math.sin(self.cameraPitch)
-        deltaZ = self.cameraDistance * math.cos(self.cameraPitch) * math.cos(self.cameraYaw)
-        return x + deltaX, y + deltaY, z + deltaZ
-    
-
 
 class UI(object):
 
@@ -257,7 +249,7 @@ class UI(object):
 
         earth = Earth(sun.offset(149600000, 0, 0))
 
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.2, 0, 0)
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), 0.6, 0, 0.0)
 
         self.universe.append(sun)
         self.universe.append(earth)
@@ -318,7 +310,7 @@ class UI(object):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
         glLoadIdentity()
-        cX, cY, cZ = self.userSpaceship.getCameraPos()
+        glTranslatef(0, 0, -self.userSpaceship.cameraDistance)
         glRotatef(math.degrees(-self.userSpaceship.cameraYaw), 0, 1, 0)
         glRotatef(math.degrees(-self.userSpaceship.cameraPitch), 1, 0, 0)
 
@@ -338,7 +330,7 @@ class UI(object):
         # starts jiggling around.  It's better to have objects that are
         # close to the camera close to the origin so that nearby objects
         # are positioned accurately, and distant ones can be out.
-                 
+        cX, cY, cZ = self.userSpaceship.location
         for obj in self.universe:
             obj.positionAndDraw(-cX, -cY, -cZ)
 
