@@ -71,7 +71,7 @@ class UI(object):
 
     def handleKeys(self, key):
         if key == K_LESS or key == K_COMMA:
-            self.universe.userSpaceship.thrust -= -1
+            self.universe.userSpaceship.thrust -= 1
         if key == K_GREATER or key == K_PERIOD:
             self.universe.userSpaceship.thrust += 1
         if key == K_UP:
