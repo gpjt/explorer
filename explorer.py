@@ -7,7 +7,7 @@ from pygame.locals import *
 from os import path
 
 import math
-
+import locale
 
 # Gravitational constant
 G = 6.67428 * 10**-11
@@ -437,11 +437,22 @@ class UI(object):
         rightOffset = 10
         wGap = 10
         leading = 3
-        
+
+        def Normalise(number):            
+            if number < 0.1:
+                return locale.format("%.1f", number * 1000, True)
+            elif number < 1:
+                return locale.format("%.0f", number * 1000, True)
+            elif number < 10:
+                return "%sk" % locale.format("%.2f", number, True)
+            elif number < 100:
+                return "%sk" % locale.format("%.1f", number * 1000, True)
+            return "%sk" % locale.format("%.0f", number, True)
+
         data = [
             ("Relative to:", self.dashboardRelativeTo.name),
-            ("Distance:", "%d km" % self.universe.userSpaceship.scalarDistanceRelativeTo(self.dashboardRelativeTo)),
-            ("Velocity:", "%d km/s" % self.universe.userSpaceship.scalarVelocityRelativeTo(self.dashboardRelativeTo)),
+            ("Distance:", "%sm" % Normalise(self.universe.userSpaceship.scalarDistanceRelativeTo(self.dashboardRelativeTo))),
+            ("Velocity:", "%sm/s" % Normalise(self.universe.userSpaceship.scalarVelocityRelativeTo(self.dashboardRelativeTo))),
         ]
 
         # Draw text, adapted from http://code.activestate.com/recipes/115418/
@@ -504,6 +515,7 @@ class UI(object):
         video_flags = OPENGL | DOUBLEBUF
         
         pygame.init()
+        locale.setlocale(locale.LC_ALL, "")
         try:
             displayInfo = pygame.display.Info()
             width, height = self.resolution
