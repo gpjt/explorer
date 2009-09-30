@@ -84,6 +84,18 @@ class WorldObject(object):
         return x + offsetX, y + offsetY, z + offsetZ
 
 
+    def scalarDistanceRelativeTo(self, other):
+        sX, sY, sZ = self.location
+        oX, oY, oZ = other.location
+        return math.sqrt((oX - sX) ** 2 + (oY - sY) ** 2 + (oZ - sZ) ** 2)
+
+
+    def scalarVelocityRelativeTo(self, other):
+        sX, sY, sZ = self.velocity
+        oX, oY, oZ = other.velocity
+        return math.sqrt((oX - sX) ** 2 + (oY - sY) ** 2 + (oZ - sZ) ** 2)
+
+
 
 class Sun(WorldObject):
 
@@ -130,7 +142,7 @@ class Earth(WorldObject):
         WorldObject.__init__(self, 5.9736 * 10**24, location, velocity)
         self.radius = 6371
         self.texture = LoadTexture("envisat-earth.jpg")
-        self.name = "The Earth"
+        self.name = "Earth"
         
 
     def draw(self):
@@ -201,7 +213,7 @@ class Universe(object):
 
         # Some interesting values:
         #  Distant orbit
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (-4.4667, 0, 0))
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (0, 0, 0)) #-4.4667
         #  Roughly as high as the ISS
         # self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
         #  GEO
@@ -214,6 +226,8 @@ class Universe(object):
         self.objects.append(sun)
         self.objects.append(earth)
         self.objects.append(self.userSpaceship)
+
+        self.initialDashboardRelativeTo = earth
 
 
     def draw(self):
@@ -412,32 +426,64 @@ class UI(object):
             self.done = True
 
 
-    # Draw text, adapted from http://code.activestate.com/recipes/115418/
-    def drawTextRightAlign(self, row, textString):
+    def _renderText(self, font, text):
+        textSurface = font.render(text, True, (0, 255, 0, 255), (0, 0, 0, 0))
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        return textSurface, textData        
+
+
+    def drawDashboard(self):
+        topOffset = 10
+        rightOffset = 10
+        wGap = 10
+        leading = 3
+        
+        data = [
+            ("Relative to:", self.dashboardRelativeTo.name),
+            ("Distance:", "%d km" % self.universe.userSpaceship.scalarDistanceRelativeTo(self.dashboardRelativeTo)),
+            ("Velocity:", "%d km/s" % self.universe.userSpaceship.scalarVelocityRelativeTo(self.dashboardRelativeTo)),
+        ]
+
+        # Draw text, adapted from http://code.activestate.com/recipes/115418/
         glPushMatrix()
         
-        width, height = self.resolution
-        glViewport(0, 0, width, height)
+        screenWidth, screenHeight = self.resolution
+        glViewport(0, 0, screenWidth, screenHeight)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(0.0, width - 1.0, 0.0, height - 1.0, -1.0, 1.0)
+        glOrtho(0.0, screenWidth - 1.0, 0.0, screenHeight - 1.0, -1.0, 1.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
         font = pygame.font.Font(None, 20)
-        textSurface = font.render(textString, True, (0, 255, 0, 255), (0, 0, 0, 0))
-        textData = pygame.image.tostring(textSurface, "RGBA", True)
-        glRasterPos2i(width - textSurface.get_width() - 10, height - row * textSurface.get_height() - 10)
-        glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+        renderedData = []
+        maxLeft = 0
+        maxRight = 0
+        maxHeight = 0
+        for leftLabel, rightLabel in data:
+            leftRender = self._renderText(font, leftLabel)
+            rightRender = self._renderText(font, rightLabel)
+            renderedData.append((leftRender, rightRender))
+            maxLeft = max(maxLeft, leftRender[0].get_width())
+            maxRight = max(maxRight, rightRender[0].get_width())
+            maxHeight = max(maxHeight, leftRender[0].get_height(), rightRender[0].get_height())
+
+        for rowIndex, ((leftSurface, leftData), (rightSurface, rightData)) in enumerate(renderedData):
+            glRasterPos2i(
+                screenWidth - rightOffset - min(maxLeft, leftSurface.get_width()) - wGap - maxRight,
+                screenHeight - topOffset - (rowIndex + 1) * (maxHeight + leading)
+            )
+            glDrawPixels(leftSurface.get_width(), leftSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, leftData)
+
+            glRasterPos2i(
+                screenWidth - rightOffset - maxRight,
+                screenHeight - topOffset - (rowIndex + 1) * (maxHeight + leading)
+            )
+            glDrawPixels(rightSurface.get_width(), rightSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, rightData)
 
         glPopMatrix()
-
-
-    def drawDashboard(self):
-        self.drawTextRightAlign(1, "Relative to Earth 1")
-        self.drawTextRightAlign(2, "Relative to Earth 2")
-        self.drawTextRightAlign(3, "Relative to Earth 3")
         
+
 
 
     def draw(self):
@@ -471,6 +517,7 @@ class UI(object):
             self.resize(*self.resolution)
             self.initGL()
             self.universe = Universe()
+            self.dashboardRelativeTo = self.universe.initialDashboardRelativeTo
 
             frames = 0
             ticks = pygame.time.get_ticks()
