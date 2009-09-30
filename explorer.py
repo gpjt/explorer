@@ -72,15 +72,17 @@ class UI(object):
     def handleKeys(self, key):
         if key == K_LESS or key == K_COMMA:
             self.universe.userSpaceship.thrust -= 1
-        if key == K_GREATER or key == K_PERIOD:
+        elif key == K_GREATER or key == K_PERIOD:
             self.universe.userSpaceship.thrust += 1
-        if key == K_UP:
+        elif key == K_SLASH:
+            self.universe.userSpaceship.thrust = 0
+        elif key == K_UP:
             self.universe.userSpaceship.pitch += 1
-        if key == K_DOWN:
+        elif key == K_DOWN:
             self.universe.userSpaceship.pitch -= 1
-        if key == K_LEFT:
+        elif key == K_LEFT:
             self.universe.userSpaceship.yaw += 1
-        if key == K_RIGHT:
+        elif key == K_RIGHT:
             self.universe.userSpaceship.yaw -= 1
 
 
