@@ -4,6 +4,14 @@ from OpenGL.GLU import *
 import pygame
 
 
+def NormaliseAngle(value):
+    if value > 180:
+        value = -360 + value
+    if value < -180:
+        value = 360 + value
+    return value        
+
+
 def LoadTexture(filename):
     textureSurface = pygame.image.load(filename)
     textureData = pygame.image.tostring(textureSurface, "RGBX", 1)
