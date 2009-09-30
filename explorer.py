@@ -96,6 +96,65 @@ class WorldObject(object):
         return math.sqrt((oX - sX) ** 2 + (oY - sY) ** 2 + (oZ - sZ) ** 2)
 
 
+    def calculateAccelerationVector(self, restOfUniverse):
+        acceleration = (0, 0, 0)
+        for attractiveObject in restOfUniverse:
+            if self == attractiveObject:
+                continue
+
+            # Calculate displacement in meters (for compatibility with G)
+            displacement = (
+                (self.location[0] - attractiveObject.location[0]) * 1000,
+                (self.location[1] - attractiveObject.location[1]) * 1000,
+                (self.location[2] - attractiveObject.location[2]) * 1000
+            )
+            distanceSquared = displacement[0] ** 2 + displacement[1] ** 2 + displacement[2] ** 2
+            # F=ma => a = F/m, and F = -GMm/r**2, so we can cancel out m to get acceleration
+            scalarAcceleration = - (G * attractiveObject.mass) / distanceSquared
+            distance = math.sqrt(distanceSquared)
+            unitDisplacement = (
+                displacement[0] / distance,
+                displacement[1] / distance,
+                displacement[2] / distance,
+            )
+            aX, aY, aZ = acceleration
+            acceleration = (
+                aX + scalarAcceleration * unitDisplacement[0],
+                aY + scalarAcceleration * unitDisplacement[1],
+                aZ + scalarAcceleration * unitDisplacement[2]
+            )             
+
+        # Because all of the calculations above were in meters, we now have acceleration in
+        # ms**-2.  Convert to km to fit our normal units...
+        aX, aY, aZ = acceleration
+        aX /= 1000
+        aY /= 1000
+        aZ /= 1000
+
+        return aX, aY, aZ
+
+
+    def accelerateAndMove(self, restOfUniverse, time):
+        aX, aY, aZ = self.calculateAccelerationVector(restOfUniverse)
+        x, y, z = self.location
+        vX, vY, vZ = self.velocity
+        
+        # s = ut + 0.5at**2
+        timeSquared = time ** 2
+        self.location = (
+            x + vX * time + 0.5 * aX * timeSquared,
+            y + vY * time + 0.5 * aY * timeSquared,
+            z + vZ * time + 0.5 * aZ * timeSquared
+        )
+
+        # v = u + at
+        self.velocity = (
+            vX + aX * time,
+            vY + aY * time,
+            vZ + aZ * time
+        )
+
+
 
 class Sun(WorldObject):
 
@@ -171,7 +230,26 @@ class UserSpaceship(WorldObject):
 
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 1000000, location, velocity)
+        self.thrust = 0
 
+
+    def _selectColor(self, color):
+        r, g, b = color
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (r * 0.2, g * 0.2, b * 0.2, 1));
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (r, g, b, 1));
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (r, g, b, 1));
+        glMaterialf(GL_FRONT, GL_SHININESS, 0);
+        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
+
+
+    def changeThrust(self, delta):
+        self.thrust = max(0, self.thrust + delta)
+
+
+    def calculateAccelerationVector(self, restOfUniverse):
+        aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
+        return aZ, aY, aZ - self.thrust
+        
 
     def draw(self):
         quad = gluNewQuadric()
@@ -181,21 +259,24 @@ class UserSpaceship(WorldObject):
         length = 0.1
         baseRadius = 0.02
 
-        # Cones grow up the +Z axis, with the base at Z=0.  So in order
-        # to make the centre of ours the centre of this object, we move
-        # back half the length
+        # Move to the centre of the spaceship
         glTranslatef(0, 0, -(length / 2))
 
         # ...and then in order to make it point away from us, we rotate
         # around by 180 degrees.
         glRotatef(180, 0, 1, 0)
 
-        glColor3f(1., 0., 0.)
-
         # End-cap
+        if self.thrust:
+            color = (1, 0, 0)
+        else:
+            color = (1, 1, 1)
+
+        self._selectColor(color)            
         gluDisk(quad, 0, baseRadius, 30, 30)
 
         # Cone
+        self._selectColor((1, 1, 1))
         gluCylinder(quad, baseRadius, 0, length, 30, 30)
         
         gluDeleteQuadric(quad)
@@ -252,63 +333,11 @@ class Universe(object):
             obj.positionAndDraw(-cX, -cY, -cZ)
 
         
-
-
     def accelerateAndMove(self, time):
         for objectToMove in self.objects:
-            acceleration = (0, 0, 0)
-            for attractiveObject in self.objects:
-                if objectToMove == attractiveObject:
-                    continue
-
-                # Calculate displacement in meters (for compatibility with G)
-                displacement = (
-                    (objectToMove.location[0] - attractiveObject.location[0]) * 1000,
-                    (objectToMove.location[1] - attractiveObject.location[1]) * 1000,
-                    (objectToMove.location[2] - attractiveObject.location[2]) * 1000
-                )
-                distanceSquared = displacement[0] ** 2 + displacement[1] ** 2 + displacement[2] ** 2
-                # F=ma => a = F/m, and F = -GMm/r**2, so we can cancel out m to get acceleration
-                scalarAcceleration = - (G * attractiveObject.mass) / distanceSquared
-                distance = math.sqrt(distanceSquared)
-                unitDisplacement = (
-                    displacement[0] / distance,
-                    displacement[1] / distance,
-                    displacement[2] / distance,
-                )
-                aX, aY, aZ = acceleration
-                acceleration = (
-                    aX + scalarAcceleration * unitDisplacement[0],
-                    aY + scalarAcceleration * unitDisplacement[1],
-                    aZ + scalarAcceleration * unitDisplacement[2]
-                )             
-
-            # Because all of the calculations above were in meters, we now have acceleration in
-            # ms**-2.  Convert to km to fit our normal units...
-            aX, aY, aZ = acceleration
-            aX /= 1000
-            aY /= 1000
-            aZ /= 1000
-
-            x, y, z = objectToMove.location
-            vX, vY, vZ = objectToMove.velocity
+            objectToMove.accelerateAndMove(self.objects, time)
 
             
-            # s = ut + 0.5at**2
-            timeSquared = time ** 2
-            objectToMove.location = (
-                x + vX * time + 0.5 * aX * timeSquared,
-                y + vY * time + 0.5 * aY * timeSquared,
-                z + vZ * time + 0.5 * aZ * timeSquared
-            )
-
-            # v = u + at
-            objectToMove.velocity = (
-                vX + aX * time,
-                vY + aY * time,
-                vZ + aZ * time
-            )
-
 
 class Dashboard(object):
 
@@ -330,7 +359,7 @@ class Dashboard(object):
         elif number < 10:
             return "%sk" % locale.format("%.2f", number, True)
         elif number < 100:
-            return "%sk" % locale.format("%.1f", number * 1000, True)
+            return "%sk" % locale.format("%.1f", number, True)
         return "%sk" % locale.format("%.0f", number, True)
 
 
@@ -452,7 +481,10 @@ class UI(object):
 
 
     def handleKeys(self, key):
-        pass        
+        if key == K_LESS or key == K_COMMA:
+            self.universe.userSpaceship.changeThrust(-1)
+        if key == K_GREATER or key == K_PERIOD:
+            self.universe.userSpaceship.changeThrust(1)
 
 
     def handleMousedown(self, event):
