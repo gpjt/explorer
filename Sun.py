@@ -31,10 +31,10 @@ class Sun(WorldObject):
         glEnable(self.lightNum)
         glEnable(GL_LIGHTING)
 
-        glMaterialfv(GL_FRONT, GL_AMBIENT, self.color);
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, self.color);
-        glMaterialfv(GL_FRONT, GL_SPECULAR, self.color);
-        glMaterialf(GL_FRONT, GL_SHININESS, 1);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, self.color)
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, self.color)
+        glMaterialfv(GL_FRONT, GL_SPECULAR, self.color)
+        glMaterialf(GL_FRONT, GL_SHININESS, 1)
         glMaterialfv(GL_FRONT, GL_EMISSION, self.color)
 
         gluSphere(quad, self.radius, 40, 40)

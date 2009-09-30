@@ -23,11 +23,11 @@ class Earth(WorldObject):
         gluQuadricOrientation(quad, GLU_OUTSIDE)
         gluQuadricTexture(quad, GL_TRUE)
         
-        glMaterialfv(GL_FRONT, GL_AMBIENT, (0.2, 0.2, 0.2, 1));
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, (1, 1, 1, 1));
-        glMaterialfv(GL_FRONT, GL_SPECULAR, (1, 1, 1, 1));
-        glMaterialf(GL_FRONT, GL_SHININESS, 0);
-        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (0.2, 0.2, 0.2, 1))
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (1, 1, 1, 1))
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (1, 1, 1, 1))
+        glMaterialf(GL_FRONT, GL_SHININESS, 0)
+        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0))
         
         glBindTexture(GL_TEXTURE_2D, self.texture)
         gluSphere(quad, self.radius, 40, 40)

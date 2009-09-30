@@ -56,13 +56,16 @@ class UserSpaceship(WorldObject):
         return aX + tX, aY + tY, aZ + tZ
         
 
-    def _selectColor(self, color):
+    def _selectColor(self, color, emission):
         r, g, b = color
-        glMaterialfv(GL_FRONT, GL_AMBIENT, (r * 0.2, g * 0.2, b * 0.2, 1));
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, (r, g, b, 1));
-        glMaterialfv(GL_FRONT, GL_SPECULAR, (r, g, b, 1));
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (r * 0.2, g * 0.2, b * 0.2, 1))
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (r, g, b, 1))
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (r, g, b, 1))
         glMaterialf(GL_FRONT, GL_SHININESS, 0);
-        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
+        if emission:
+            glMaterialfv(GL_FRONT, GL_EMISSION, (r, g, b, 1))
+        else:
+            glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0))
 
 
     def draw(self):
@@ -79,19 +82,21 @@ class UserSpaceship(WorldObject):
         # End-cap
         if self.thrust:
             color = (1, 0, 0)
+            emission = True
         else:
             color = (1, 1, 1)
+            emission = False
 
         quad = gluNewQuadric()
         gluQuadricOrientation(quad, GLU_OUTSIDE)
-        self._selectColor(color)            
+        self._selectColor(color, emission)
         gluDisk(quad, 0, baseRadius, 30, 30)
         gluDeleteQuadric(quad)
 
         # Cone
         quad = gluNewQuadric()
         gluQuadricOrientation(quad, GLU_OUTSIDE)
-        self._selectColor((1, 1, 1))
+        self._selectColor((1, 1, 1), False)
         # Make it face away from us
         glRotatef(180, 0, 1, 0)
         gluCylinder(quad, baseRadius, 0, length, 30, 30)
