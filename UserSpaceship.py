@@ -94,26 +94,30 @@ class UserSpaceship(WorldObject):
         gluDeleteQuadric(quad)
 
         # Tailfins
-        
+
         self._selectColor((1, 1, 1), False)
-        # Top tailfin
-        glBegin(GL_TRIANGLES)
-        # Back
-        glNormal3f(0, 0, 1)
-        glVertex3f(0, baseRadius * 2.5, -0.0001)
-        glVertex3f(-0.001, 0, -0.0001)
-        glVertex3f(0.001, 0, -0.0001)
-        # Left
-        glNormal3f(-1, 0, 0)
-        glVertex3f(0, baseRadius * 2.5, -0.0001)
-        glVertex3f(-0.001, 0, -0.0001)
-        glVertex3f(0, 0, -length / 2)
-        # Right
-        glNormal3f(1, 0, 0)
-        glVertex3f(0, baseRadius * 2.5, -0.0001)
-        glVertex3f(0.001, 0, -0.0001)
-        glVertex3f(0, 0, -length / 2)
-        glEnd()
+        
+        for angle in (0, 100, 260):
+            glPushMatrix()
+            glRotatef(angle, 0, 0, 1)
+            glBegin(GL_TRIANGLES)
+            # Back
+            glNormal3f(0, 0, 1)
+            glVertex3f(0, baseRadius * 2.5, -0.0001)
+            glVertex3f(-0.001, 0, -0.0001)
+            glVertex3f(0.001, 0, -0.0001)
+            # Left
+            glNormal3f(-1, 0, 0)
+            glVertex3f(0, baseRadius * 2.5, -0.0001)
+            glVertex3f(-0.001, 0, -0.0001)
+            glVertex3f(0, 0, -length / 2)
+            # Right
+            glNormal3f(1, 0, 0)
+            glVertex3f(0, baseRadius * 2.5, -0.0001)
+            glVertex3f(0.001, 0, -0.0001)
+            glVertex3f(0, 0, -length / 2)
+            glEnd()
+            glPopMatrix()
     
         # Cone
         quad = gluNewQuadric()
