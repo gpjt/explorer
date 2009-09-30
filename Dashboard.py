@@ -40,6 +40,8 @@ class Dashboard(object):
             ("Relative to:", self.relativeTo.name),
             ("Distance:", "%sm" % self._normalise(self.userSpaceship.scalarDistanceRelativeTo(self.relativeTo))),
             ("Velocity:", "%sm/s" % self._normalise(self.userSpaceship.scalarVelocityRelativeTo(self.relativeTo))),
+            ("", ""),
+            ("Thrust:", "%sm/s/s" % self._normalise(self.userSpaceship.thrust)),
         ]
 
         # Draw text, adapted from http://code.activestate.com/recipes/115418/
