@@ -92,6 +92,7 @@ class Sun(WorldObject):
         self.radius = 1392000
         self.color = (1., 1., 0.5)
         self.lightNum = GL_LIGHT0
+        self.name = "The Sun"
 
 
     def draw(self):
@@ -129,6 +130,7 @@ class Earth(WorldObject):
         WorldObject.__init__(self, 5.9736 * 10**24, location, velocity)
         self.radius = 6371
         self.texture = LoadTexture("envisat-earth.jpg")
+        self.name = "The Earth"
         
 
     def draw(self):
@@ -212,7 +214,7 @@ class Universe(object):
         self.objects.append(sun)
         self.objects.append(earth)
         self.objects.append(self.userSpaceship)
-            
+
 
     def draw(self):
         # Draw the sky separately...
@@ -234,6 +236,8 @@ class Universe(object):
         cX, cY, cZ = self.userSpaceship.location
         for obj in self.objects:
             obj.positionAndDraw(-cX, -cY, -cZ)
+
+        
 
 
     def accelerateAndMove(self, time):
@@ -408,15 +412,45 @@ class UI(object):
             self.done = True
 
 
+    # Draw text, adapted from http://code.activestate.com/recipes/115418/
+    def drawTextRightAlign(self, row, textString):
+        glPushMatrix()
+        
+        width, height = self.resolution
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0.0, width - 1.0, 0.0, height - 1.0, -1.0, 1.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        font = pygame.font.Font(None, 20)
+        textSurface = font.render(textString, True, (0, 255, 0, 255), (0, 0, 0, 0))
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        glRasterPos2i(width - textSurface.get_width() - 10, height - row * textSurface.get_height() - 10)
+        glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+
+        glPopMatrix()
+
+
+    def drawDashboard(self):
+        self.drawTextRightAlign(1, "Relative to Earth 1")
+        self.drawTextRightAlign(2, "Relative to Earth 2")
+        self.drawTextRightAlign(3, "Relative to Earth 3")
+        
+
+
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
+        self.resize(*self.resolution)
         
         glTranslatef(0, 0, -self.cameraDistance)
         glRotatef(math.degrees(-self.cameraYaw), 0, 1, 0)
         glRotatef(math.degrees(-self.cameraPitch), 1, 0, 0)
         
         self.universe.draw()
+        self.drawDashboard()
 
 
     def main(self):
@@ -429,11 +463,12 @@ class UI(object):
             width, height = self.resolution
             width = min(width, displayInfo.current_w)
             height = min(height, displayInfo.current_h - 20)
+            self.resolution = width, height
             
-            pygame.display.set_mode((width, height), video_flags)
+            pygame.display.set_mode(self.resolution, video_flags)
             pygame.key.set_repeat(100,0)
 
-            self.resize(width, height)
+            self.resize(*self.resolution)
             self.initGL()
             self.universe = Universe()
 
