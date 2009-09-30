@@ -9,6 +9,9 @@ from os import path
 import math
 import locale
 
+from Utils import LoadTexture
+from SurroundingSky import SurroundingSky
+
 # Gravitational constant
 G = 6.67428 * 10**-11
 
@@ -21,51 +24,6 @@ def NormaliseAngle(value):
     return value        
 
 
-class SurroundingSky(object):
-    
-    def __init__(self):
-        self.radius = 10000000
-        self.texture = LoadTexture("gigapixel-milky-way.jpg")
-
-
-    def draw(self):
-        glPushMatrix()
-        
-        glDisable(GL_DEPTH_TEST) 
-
-        quad = gluNewQuadric()
-
-        gluQuadricOrientation(quad, GLU_INSIDE)
-        gluQuadricTexture(quad, GL_TRUE)
-        
-        glMaterialfv(GL_FRONT, GL_AMBIENT, (0, 0, 0, 0));
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, (0, 0, 0, 0));
-        glMaterialfv(GL_FRONT, GL_SPECULAR, (0, 0, 0, 0));
-        glMaterialf(GL_FRONT, GL_SHININESS, 0);
-        glMaterialfv(GL_FRONT, GL_EMISSION, (1, 1, 1, 1));
-        
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-        gluSphere(quad, self.radius, 40, 40)
-        
-        gluDeleteQuadric(quad)
-
-        glEnable(GL_DEPTH_TEST) 
-
-        glPopMatrix()
-
-
-
-def LoadTexture(filename):
-    textureSurface = pygame.image.load(filename)
-    textureData = pygame.image.tostring(textureSurface, "RGBX", 1)
-
-    texture = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, textureSurface.get_width(), textureSurface.get_height(),
-                      GL_RGBA, GL_UNSIGNED_BYTE, textureData)
-    return texture    
 
 
 class WorldObject(object):
@@ -280,7 +238,6 @@ class UserSpaceship(WorldObject):
         tX = -self.thrust * math.cos(pitch) * math.sin(yaw)
         tY = self.thrust * math.sin(pitch)
         tZ = -self.thrust * math.cos(pitch) * math.cos(yaw)
-        print tX, tY, tZ
         
         return aX + tX, aY + tY, aZ + tZ
         
