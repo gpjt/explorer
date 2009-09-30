@@ -274,7 +274,15 @@ class UserSpaceship(WorldObject):
 
     def calculateAccelerationVector(self, restOfUniverse):
         aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
-        return aZ, aY, aZ - self.thrust
+
+        pitch = math.radians(self.pitch)
+        yaw = math.radians(self.yaw)
+        tX = -self.thrust * math.cos(pitch) * math.sin(yaw)
+        tY = self.thrust * math.sin(pitch)
+        tZ = -self.thrust * math.cos(pitch) * math.cos(yaw)
+        print tX, tY, tZ
+        
+        return aX + tX, aY + tY, aZ + tZ
         
 
     def draw(self):
