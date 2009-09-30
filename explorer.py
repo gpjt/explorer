@@ -13,6 +13,13 @@ import locale
 G = 6.67428 * 10**-11
 
 
+def NormaliseAngle(value):
+    if value > 180:
+        value = -360 + value
+    if value < -180:
+        value = 360 + value
+    return value        
+
 
 class SurroundingSky(object):
     
@@ -234,6 +241,23 @@ class UserSpaceship(WorldObject):
         self.pitch = 0
         self.yaw = 0
 
+    @property
+    def yaw(self):
+        return self.__yaw
+
+    @yaw.setter
+    def yaw(self, value):
+        self.__yaw = NormaliseAngle(value)
+
+        
+    @property
+    def pitch(self):
+        return self.__pitch
+
+    @pitch.setter
+    def pitch(self, value):
+        self.__pitch = NormaliseAngle(value)
+
 
     def _selectColor(self, color):
         r, g, b = color
@@ -440,21 +464,13 @@ class UI(object):
         self.cameraPitch = 0
 
 
-    def normaliseAngle(self, value):
-        if value > 180:
-            value = -360 + value
-        if value < -180:
-            value = 360 + value
-        return value        
-
-
     @property
     def cameraYaw(self):
         return self.__cameraYaw
 
     @cameraYaw.setter
     def cameraYaw(self, value):
-        self.__cameraYaw = self.normaliseAngle(value)
+        self.__cameraYaw = NormaliseAngle(value)
 
         
     @property
@@ -463,7 +479,7 @@ class UI(object):
 
     @cameraPitch.setter
     def cameraPitch(self, value):
-        self.__cameraPitch = self.normaliseAngle(value)
+        self.__cameraPitch = NormaliseAngle(value)
 
     
     def resize(self, width, height):
@@ -491,6 +507,14 @@ class UI(object):
             self.universe.userSpaceship.changeThrust(-1)
         if key == K_GREATER or key == K_PERIOD:
             self.universe.userSpaceship.changeThrust(1)
+        if key == K_UP:
+            self.universe.userSpaceship.pitch += 1
+        if key == K_DOWN:
+            self.universe.userSpaceship.pitch -= 1
+        if key == K_LEFT:
+            self.universe.userSpaceship.yaw += 1
+        if key == K_RIGHT:
+            self.universe.userSpaceship.yaw -= 1
 
 
     def handleMousedown(self, event):
