@@ -278,19 +278,11 @@ class UserSpaceship(WorldObject):
         
 
     def draw(self):
-        quad = gluNewQuadric()
-
-        gluQuadricOrientation(quad, GLU_OUTSIDE)
-
         length = 0.1
         baseRadius = 0.02
 
         # Move to the centre of the spaceship
         glTranslatef(0, 0, -(length / 2))
-
-        # ...and then in order to make it point away from us, we rotate
-        # around by 180 degrees.
-        glRotatef(180, 0, 1, 0)
 
         # Finally, we take account of pitch and yaw
         glRotatef(self.pitch, 1, 0, 0)
@@ -302,13 +294,19 @@ class UserSpaceship(WorldObject):
         else:
             color = (1, 1, 1)
 
+        quad = gluNewQuadric()
+        gluQuadricOrientation(quad, GLU_OUTSIDE)
         self._selectColor(color)            
         gluDisk(quad, 0, baseRadius, 30, 30)
+        gluDeleteQuadric(quad)
 
         # Cone
+        quad = gluNewQuadric()
+        gluQuadricOrientation(quad, GLU_OUTSIDE)
         self._selectColor((1, 1, 1))
+        # Make it face away from us
+        glRotatef(180, 0, 1, 0)
         gluCylinder(quad, baseRadius, 0, length, 30, 30)
-        
         gluDeleteQuadric(quad)
 
 
