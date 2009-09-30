@@ -231,6 +231,8 @@ class UserSpaceship(WorldObject):
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 1000000, location, velocity)
         self.thrust = 0
+        self.pitch = 0
+        self.yaw = 0
 
 
     def _selectColor(self, color):
@@ -265,6 +267,10 @@ class UserSpaceship(WorldObject):
         # ...and then in order to make it point away from us, we rotate
         # around by 180 degrees.
         glRotatef(180, 0, 1, 0)
+
+        # Finally, we take account of pitch and yaw
+        glRotatef(self.pitch, 1, 0, 0)
+        glRotatef(self.yaw, 0, 1, 0)
 
         # End-cap
         if self.thrust:
@@ -435,10 +441,10 @@ class UI(object):
 
 
     def normaliseAngle(self, value):
-        if value > math.pi:
-            value = -((math.pi * 2) - value)
-        if value < -math.pi:
-            value = (math.pi * 2) + value
+        if value > 180:
+            value = -360 + value
+        if value < -180:
+            value = 360 + value
         return value        
 
 
@@ -496,7 +502,7 @@ class UI(object):
             self.cameraDistance -= 0.01
         elif event.button == 5:
             # Mouse wheel roll down
-            self.cameraDistance += 0.01            
+            self.cameraDistance += 0.01
 
 
     def handleMouseup(self, event):
@@ -511,8 +517,8 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.cameraPitch -= float(deltaY) / 300
-            self.cameraYaw -= float(deltaX) / 300
+            self.cameraPitch -= float(deltaY) / (360. / self.fovV)
+            self.cameraYaw -= float(deltaX) / (360. / self.fovV)
             self.dragLastEvent = nowX, nowY
 
 
@@ -538,8 +544,8 @@ class UI(object):
         self.resize(*self.resolution)
         
         glTranslatef(0, 0, -self.cameraDistance)
-        glRotatef(math.degrees(-self.cameraYaw), 0, 1, 0)
-        glRotatef(math.degrees(-self.cameraPitch), 1, 0, 0)
+        glRotatef(-self.cameraYaw, 0, 1, 0)
+        glRotatef(-self.cameraPitch, 1, 0, 0)
         
         self.universe.draw()
         self.dashboard.draw(*self.resolution)
