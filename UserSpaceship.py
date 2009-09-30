@@ -33,17 +33,15 @@ class UserSpaceship(WorldObject):
         self.__pitch = NormaliseAngle(value)
 
 
-    def _selectColor(self, color):
-        r, g, b = color
-        glMaterialfv(GL_FRONT, GL_AMBIENT, (r * 0.2, g * 0.2, b * 0.2, 1));
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, (r, g, b, 1));
-        glMaterialfv(GL_FRONT, GL_SPECULAR, (r, g, b, 1));
-        glMaterialf(GL_FRONT, GL_SHININESS, 0);
-        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
+    @property
+    def thrust(self):
+        return self.__thrust
 
-
-    def changeThrust(self, delta):
-        self.thrust = max(0, self.thrust + delta)
+    @thrust.setter
+    def thrust(self, value):
+        self.__thrust = value
+        if self.__thrust < 0:
+            self.__thrust = 0
 
 
     def calculateAccelerationVector(self, restOfUniverse):
@@ -57,6 +55,15 @@ class UserSpaceship(WorldObject):
         
         return aX + tX, aY + tY, aZ + tZ
         
+
+    def _selectColor(self, color):
+        r, g, b = color
+        glMaterialfv(GL_FRONT, GL_AMBIENT, (r * 0.2, g * 0.2, b * 0.2, 1));
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, (r, g, b, 1));
+        glMaterialfv(GL_FRONT, GL_SPECULAR, (r, g, b, 1));
+        glMaterialf(GL_FRONT, GL_SHININESS, 0);
+        glMaterialfv(GL_FRONT, GL_EMISSION, (0, 0, 0, 0));
+
 
     def draw(self):
         length = 0.1
