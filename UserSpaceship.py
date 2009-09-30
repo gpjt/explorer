@@ -93,6 +93,28 @@ class UserSpaceship(WorldObject):
         gluDisk(quad, 0, baseRadius, 30, 30)
         gluDeleteQuadric(quad)
 
+        # Tailfins
+        
+        self._selectColor((1, 1, 1), False)
+        # Top tailfin
+        glBegin(GL_TRIANGLES)
+        # Back
+        glNormal3f(0, 0, 1)
+        glVertex3f(0, baseRadius * 2.5, -0.0001)
+        glVertex3f(-0.001, 0, -0.0001)
+        glVertex3f(0.001, 0, -0.0001)
+        # Left
+        glNormal3f(-1, 0, 0)
+        glVertex3f(0, baseRadius * 2.5, -0.0001)
+        glVertex3f(-0.001, 0, -0.0001)
+        glVertex3f(0, 0, -length / 2)
+        # Right
+        glNormal3f(1, 0, 0)
+        glVertex3f(0, baseRadius * 2.5, -0.0001)
+        glVertex3f(0.001, 0, -0.0001)
+        glVertex3f(0, 0, -length / 2)
+        glEnd()
+    
         # Cone
         quad = gluNewQuadric()
         gluQuadricOrientation(quad, GLU_OUTSIDE)
