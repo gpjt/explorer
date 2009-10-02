@@ -7,8 +7,9 @@ import pygame
 from pygame.locals import *
 
 from Dashboard import Dashboard
+from RotationHandler import RotationHandler
 from Universe import Universe
-from Utils import LoadTexture, NormaliseAngle
+from Utils import LoadTexture
 
 
 class UI(object):
@@ -27,28 +28,11 @@ class UI(object):
         self.dragLastEvent = None
 
         self.cameraDistance = 0.6
-        self.cameraYaw = 0
-        self.cameraPitch = 0
+
+        # We can't set up the rotation handler until GL is initialised.
+        self.rotationHandler = None
 
 
-    @property
-    def cameraYaw(self):
-        return self.__cameraYaw
-
-    @cameraYaw.setter
-    def cameraYaw(self, value):
-        self.__cameraYaw = NormaliseAngle(value)
-
-        
-    @property
-    def cameraPitch(self):
-        return self.__cameraPitch
-
-    @cameraPitch.setter
-    def cameraPitch(self, value):
-        self.__cameraPitch = NormaliseAngle(value)
-
-    
     def resize(self, width, height):
         if height == 0:
             height = 1.0
@@ -67,6 +51,8 @@ class UI(object):
         glDepthFunc(GL_LEQUAL)
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
         glEnable(GL_TEXTURE_2D)
+
+        self.rotationHandler = RotationHandler()
 
 
     def handleKeys(self, key):
@@ -110,8 +96,8 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.cameraPitch -= float(deltaY) / (360. / self.fovV)
-            self.cameraYaw -= float(deltaX) / (360. / self.fovV)
+            self.rotationHandler.pitchBy(float(deltaY) / (360. / self.fovV))
+            self.rotationHandler.yawBy(float(deltaX) / (360. / self.fovV))
             self.dragLastEvent = nowX, nowY
 
 
@@ -137,8 +123,7 @@ class UI(object):
         self.resize(*self.resolution)
         
         glTranslatef(0, 0, -self.cameraDistance)
-        glRotatef(-self.cameraYaw, 0, 1, 0)
-        glRotatef(-self.cameraPitch, 1, 0, 0)
+        self.rotationHandler.rotateCurrentMatrix()
         
         self.universe.draw()
         self.dashboard.draw(*self.resolution)
