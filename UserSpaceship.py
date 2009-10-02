@@ -3,6 +3,7 @@ import math
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+from RotationHandler import RotationHandler
 from WorldObject import WorldObject
 
 
@@ -11,30 +12,15 @@ class UserSpaceship(WorldObject):
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 1000000, location, velocity)
         self.thrust = 0
-
-        # We keep the current rotation state of the spaceship as a matrix;
-        # the following is a (doubtless poor) way of getting a starting point.         
-        glPushMatrix()
-        glLoadIdentity()
-        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glPopMatrix()
-
+        self.rotationHandler = RotationHandler()
 
     def yawBy(self, degrees):
-        glPushMatrix()
-        glLoadMatrixf(self.rotationMatrix)
-        glRotatef(degrees, 0, 1, 0)
-        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glPopMatrix()
+        return self.rotationHandler.yawBy(degrees)
 
 
     def pitchBy(self, degrees):        
-        glPushMatrix()
-        glLoadMatrixf(self.rotationMatrix)
-        glRotatef(degrees, 1, 0, 0)
-        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glPopMatrix()
-
+        return self.rotationHandler.pitchBy(degrees)
+    
 
     @property
     def thrust(self):
@@ -49,14 +35,7 @@ class UserSpaceship(WorldObject):
 
     def calculateAccelerationVector(self, restOfUniverse):
         aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
-
-        glPushMatrix()
-        glLoadMatrixf(self.rotationMatrix)
-        glTranslatef(0, 0, -self.thrust)
-        thrustMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glPopMatrix()
-        tX, tY, tZ, _ = thrustMatrix[3]
-        
+        tX, tY, tZ = self.rotationHandler.rotateVector(0, 0, -self.thrust)
         return aX + tX, aY + tY, aZ + tZ
         
 
@@ -80,7 +59,7 @@ class UserSpaceship(WorldObject):
         glTranslatef(0, 0, -(length / 2))
 
         # Finally, we take account of the roll matrix        
-        glMultMatrixf(self.rotationMatrix)
+        self.rotationHandler.rotateCurrentMatrix()
         
         # End-cap
         if self.thrust:
