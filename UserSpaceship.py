@@ -3,7 +3,6 @@ import math
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from Utils import NormaliseAngle
 from WorldObject import WorldObject
 
 
@@ -12,25 +11,29 @@ class UserSpaceship(WorldObject):
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 1000000, location, velocity)
         self.thrust = 0
-        self.pitch = 0
-        self.yaw = 0
 
-    @property
-    def yaw(self):
-        return self.__yaw
+        # We keep the current rotation state of the spaceship as a matrix;
+        # the following is a (doubtless poor) way of getting a starting point.         
+        glPushMatrix()
+        glLoadIdentity()
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
 
-    @yaw.setter
-    def yaw(self, value):
-        self.__yaw = NormaliseAngle(value)
 
-        
-    @property
-    def pitch(self):
-        return self.__pitch
+    def yawBy(self, degrees):
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glRotatef(degrees, 0, 1, 0)
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
 
-    @pitch.setter
-    def pitch(self, value):
-        self.__pitch = NormaliseAngle(value)
+
+    def pitchBy(self, degrees):        
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glRotatef(degrees, 1, 0, 0)
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
 
 
     @property
@@ -47,11 +50,12 @@ class UserSpaceship(WorldObject):
     def calculateAccelerationVector(self, restOfUniverse):
         aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
 
-        pitch = math.radians(self.pitch)
-        yaw = math.radians(self.yaw)
-        tX = -self.thrust * math.cos(pitch) * math.sin(yaw)
-        tY = self.thrust * math.sin(pitch)
-        tZ = -self.thrust * math.cos(pitch) * math.cos(yaw)
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glTranslatef(0, 0, -self.thrust)
+        thrustMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
+        tX, tY, tZ, _ = thrustMatrix[3]
         
         return aX + tX, aY + tY, aZ + tZ
         
@@ -75,10 +79,9 @@ class UserSpaceship(WorldObject):
         # Move to the centre of the spaceship
         glTranslatef(0, 0, -(length / 2))
 
-        # Finally, we take account of pitch and yaw
-        glRotatef(self.pitch, 1, 0, 0)
-        glRotatef(self.yaw, 0, 1, 0)
-
+        # Finally, we take account of the roll matrix        
+        glMultMatrixf(self.rotationMatrix)
+        
         # End-cap
         if self.thrust:
             color = (1, 0, 0)
