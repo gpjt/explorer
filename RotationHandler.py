@@ -44,9 +44,9 @@ class RotationHandler(object):
         glPushMatrix()
         glLoadMatrixf(self.rotationMatrix)
         glTranslatef(x, y, z)
-        thrustMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        rotated = glGetFloatv(GL_MODELVIEW_MATRIX)
         glPopMatrix()
-        rX, rY, rZ, _ = thrustMatrix[3]
+        rX, rY, rZ, _ = rotated[3]
         return rX, rY, rZ
         
 
