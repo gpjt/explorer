@@ -12,14 +12,27 @@ class UserSpaceship(WorldObject):
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 1000000, location, velocity)
         self.thrust = 0
-        self.rotationHandler = RotationHandler()
+        
+        glPushMatrix()
+        glLoadIdentity()
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
+
 
     def yawBy(self, degrees):
-        return self.rotationHandler.yawBy(degrees)
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glRotatef(degrees, 0, 1, 0)
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
 
 
     def pitchBy(self, degrees):        
-        return self.rotationHandler.pitchBy(degrees)
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glRotatef(degrees, 1, 0, 0)
+        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
     
 
     @property
@@ -35,8 +48,15 @@ class UserSpaceship(WorldObject):
 
     def calculateAccelerationVector(self, restOfUniverse):
         aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
-        tX, tY, tZ = self.rotationHandler.rotateVector(0, 0, -self.thrust)
-        return aX + tX, aY + tY, aZ + tZ
+
+        glPushMatrix()
+        glLoadMatrixf(self.rotationMatrix)
+        glTranslatef(0, 0, -self.thrust)
+        rotated = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
+        rX, rY, rZ, _ = rotated[3]
+
+        return aX + rX, aY + rY, aZ + rZ
         
 
     def _selectColor(self, color, emission):
@@ -58,8 +78,7 @@ class UserSpaceship(WorldObject):
         # Move to the centre of the spaceship
         glTranslatef(0, 0, -(length / 2))
 
-        # Finally, we take account of the roll matrix        
-        self.rotationHandler.rotateCurrentMatrix()
+        glMultMatrixf(self.rotationMatrix)
         
         # End-cap
         if self.thrust:

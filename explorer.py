@@ -29,9 +29,6 @@ class UI(object):
 
         self.cameraDistance = 0.6
 
-        # We can't set up the rotation handler until GL is initialised.
-        self.rotationHandler = None
-
 
     def resize(self, width, height):
         if height == 0:
@@ -52,7 +49,10 @@ class UI(object):
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
         glEnable(GL_TEXTURE_2D)
 
-        self.rotationHandler = RotationHandler(reverse=True)
+        glPushMatrix()
+        glLoadIdentity()
+        self.cameraRotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glPopMatrix()
 
 
     def handleKeys(self, key):
@@ -96,8 +96,15 @@ class UI(object):
             thenX, thenY = self.dragLastEvent
             deltaX = nowX - thenX
             deltaY = nowY - thenY
-            self.rotationHandler.pitchBy(float(deltaY) / (360. / self.fovV))
-            self.rotationHandler.yawBy(float(deltaX) / (360. / self.fovV))
+
+            glPushMatrix()
+            glLoadIdentity()
+            glRotatef(float(deltaX) / (360. / self.fovV), 0, 1, 0)
+            glRotatef(float(deltaY) / (360. / self.fovV), 1, 0, 0)
+            glMultMatrixf(self.cameraRotationMatrix)            
+            self.cameraRotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+            glPopMatrix()
+
             self.dragLastEvent = nowX, nowY
 
 
@@ -123,7 +130,7 @@ class UI(object):
         self.resize(*self.resolution)
         
         glTranslatef(0, 0, -self.cameraDistance)
-        self.rotationHandler.rotateCurrentMatrix()
+        glMultMatrixf(self.cameraRotationMatrix)
         
         self.universe.draw()
         self.dashboard.draw(*self.resolution)
