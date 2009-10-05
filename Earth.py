@@ -9,6 +9,8 @@ class Earth(WorldObject):
     def __init__(self, location, velocity):
         WorldObject.__init__(self, 5.9736 * 10**24, location, velocity)
         self.radius = 6371
+        self.rotationPeriod = 3600 * 24
+        self.rotation = 0
         self.texture = LoadTexture("envisat-earth.jpg")
         self.name = "Earth"
         
@@ -18,7 +20,8 @@ class Earth(WorldObject):
 
         # By default we'd wind up with the north pole facing the +ve
         # Z axis, which would be toward us normally.
-        glRotatef(-90, 1, 0, 0)
+        glRotatef(self.rotation, 0, 1, 0)
+        glRotatef(-90, 1, 0, 0)        
 
         gluQuadricOrientation(quad, GLU_OUTSIDE)
         gluQuadricTexture(quad, GL_TRUE)
@@ -35,3 +38,6 @@ class Earth(WorldObject):
         gluDeleteQuadric(quad)
 
 
+    def accelerateAndMove(self, restOfUniverse, time):
+        WorldObject.accelerateAndMove(self, restOfUniverse, time)
+        self.rotation += 360 / (self.rotationPeriod / time)
