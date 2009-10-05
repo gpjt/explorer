@@ -30,6 +30,11 @@ class WorldObject(object):
         return x + offsetX, y + offsetY, z + offsetZ
 
 
+    def relativeVelocity(self, offsetX, offsetY, offsetZ):
+        x, y, z = self.velocity
+        return x + offsetX, y + offsetY, z + offsetZ
+
+
     def scalarDistanceRelativeTo(self, other):
         sX, sY, sZ = self.location
         oX, oY, oZ = other.location

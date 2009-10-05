@@ -11,15 +11,15 @@ class Universe(object):
 
         sun = Sun((0, 0, 0), (0, 0, 0))
 
-        earth = Earth(sun.offset(149600000, 0, 0), (0, 0, 0))
+        earth = Earth(sun.offset(79262956, -128906582, -13927363), (24.85, 15.34, 2.499))
 
         # Some interesting values:
         #  Distant orbit
-        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), (-4.4667, 0, 0))
+        self.userSpaceship = UserSpaceship(earth.offset(0, 0, 19999), earth.relativeVelocity(-4.4667, 0, 0))
         #  Roughly as high as the ISS
-        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), (-7.73, 0, 0))
+        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, earth.radius + 340), earth.relativeVelocity(-7.73, 0, 0))
         #  GEO
-        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 42164), (-3.07, 0, 0))
+        # self.userSpaceship = UserSpaceship(earth.offset(0, 0, 42164), earth.relativeVelocity(-3.07, 0, 0))
         #  Here's a good resource for finding velocity for a circular orbit at a given altitude,
         #  though you need to remember that it's altitude and not distance from the centre of the
         #  Earth: <http://home.att.net/~ntdoug/UCM2.html>
