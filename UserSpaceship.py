@@ -19,21 +19,13 @@ class UserSpaceship(WorldObject):
         glPopMatrix()
 
 
-    def yawBy(self, degrees):
+    def rotateBy(self, angle, (axisX, axisY, axisZ)):
         glPushMatrix()
         glLoadMatrixf(self.rotationMatrix)
-        glRotatef(degrees, 0, 1, 0)
+        glRotatef(angle, axisX, axisY, axisZ)
         self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
         glPopMatrix()
-
-
-    def pitchBy(self, degrees):        
-        glPushMatrix()
-        glLoadMatrixf(self.rotationMatrix)
-        glRotatef(degrees, 1, 0, 0)
-        self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glPopMatrix()
-    
+        
 
     @property
     def thrust(self):

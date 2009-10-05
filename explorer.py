@@ -63,13 +63,13 @@ class UI(object):
         elif key == K_SLASH:
             self.universe.userSpaceship.thrust = 0
         elif key == K_UP:
-            self.universe.userSpaceship.pitchBy(3)
+            self.universe.userSpaceship.rotateBy(3, (1, 0, 0))
         elif key == K_DOWN:
-            self.universe.userSpaceship.pitchBy(-3)
+            self.universe.userSpaceship.rotateBy(-3, (1, 0, 0))
         elif key == K_LEFT:
-            self.universe.userSpaceship.yawBy(3)
+            self.universe.userSpaceship.rotateBy(3, (0, 1, 0))
         elif key == K_RIGHT:
-            self.universe.userSpaceship.yawBy(-3)
+            self.universe.userSpaceship.rotateBy(-3, (0, 1, 0))
 
 
     def handleMousedown(self, event):
