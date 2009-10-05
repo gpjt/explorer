@@ -1,4 +1,5 @@
 from Earth import Earth
+from SpaceStation import SpaceStation
 from Sun import Sun
 from SurroundingSky import SurroundingSky
 from UserSpaceship import UserSpaceship
@@ -24,10 +25,13 @@ class Universe(object):
         #  though you need to remember that it's altitude and not distance from the centre of the
         #  Earth: <http://home.att.net/~ntdoug/UCM2.html>
 
+        spaceStation = SpaceStation(earth.offset(1, 1, earth.radius + 335), earth.relativeVelocity(-7.73, 0, 0))
+
         self.objects = []
         self.objects.append(sun)
         self.objects.append(earth)
         self.objects.append(self.userSpaceship)
+        self.objects.append(spaceStation)
 
         self.initialDashboardRelativeTo = earth
 
