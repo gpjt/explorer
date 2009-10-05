@@ -52,7 +52,7 @@ class UI(object):
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
         glEnable(GL_TEXTURE_2D)
 
-        self.rotationHandler = RotationHandler()
+        self.rotationHandler = RotationHandler(reverse=True)
 
 
     def handleKeys(self, key):
