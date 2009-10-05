@@ -15,6 +15,7 @@ class UserSpaceship(WorldObject):
         
         glPushMatrix()
         glLoadIdentity()
+        glRotatef(180, 0, 1, 0)
         self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
         glPopMatrix()
 
@@ -25,6 +26,12 @@ class UserSpaceship(WorldObject):
         glRotatef(angle, axisX, axisY, axisZ)
         self.rotationMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
         glPopMatrix()
+
+
+    def jump(self):
+        x, y, z = self.location
+        dX, dY, dZ = self.vectorPointingForward(250000)
+        self.location = x + dX, y + dY, z + dZ
         
 
     @property
@@ -38,17 +45,20 @@ class UserSpaceship(WorldObject):
             self.__thrust = 0
 
 
-    def calculateAccelerationVector(self, restOfUniverse):
-        aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
-
+    def vectorPointingForward(self, length):
         glPushMatrix()
         glLoadMatrixf(self.rotationMatrix)
-        glTranslatef(0, 0, -self.thrust)
+        glTranslatef(0, 0, length)
         rotated = glGetFloatv(GL_MODELVIEW_MATRIX)
         glPopMatrix()
         rX, rY, rZ, _ = rotated[3]
+        return rX, rY, rZ
 
-        return aX + rX, aY + rY, aZ + rZ
+
+    def calculateAccelerationVector(self, restOfUniverse):
+        aX, aY, aZ = WorldObject.calculateAccelerationVector(self, restOfUniverse)
+        tX, tY, tZ = self.vectorPointingForward(self.thrust)
+        return aX + tX, aY + tY, aZ + tZ
         
 
     def _selectColor(self, color, emission):
@@ -81,7 +91,7 @@ class UserSpaceship(WorldObject):
             emission = False
 
         quad = gluNewQuadric()
-        gluQuadricOrientation(quad, GLU_OUTSIDE)
+        gluQuadricOrientation(quad, GLU_INSIDE)
         self._selectColor(color, emission)
         gluDisk(quad, 0, baseRadius, 30, 30)
         gluDeleteQuadric(quad)
@@ -96,19 +106,19 @@ class UserSpaceship(WorldObject):
             glBegin(GL_TRIANGLES)
             # Back
             glNormal3f(0, 0, 1)
-            glVertex3f(0, baseRadius * 2.5, -0.0001)
-            glVertex3f(-0.001, 0, -0.0001)
-            glVertex3f(0.001, 0, -0.0001)
+            glVertex3f(0, baseRadius * 2.5, 0.0001)
+            glVertex3f(-0.001, 0, 0.0001)
+            glVertex3f(0.001, 0, 0.0001)
             # Left
             glNormal3f(-1, 0, 0)
-            glVertex3f(0, baseRadius * 2.5, -0.0001)
-            glVertex3f(-0.001, 0, -0.0001)
-            glVertex3f(0, 0, -length / 2)
+            glVertex3f(0, baseRadius * 2.5, 0.0001)
+            glVertex3f(-0.001, 0, 0.0001)
+            glVertex3f(0, 0, length / 2)
             # Right
             glNormal3f(1, 0, 0)
-            glVertex3f(0, baseRadius * 2.5, -0.0001)
-            glVertex3f(0.001, 0, -0.0001)
-            glVertex3f(0, 0, -length / 2)
+            glVertex3f(0, baseRadius * 2.5, 0.0001)
+            glVertex3f(0.001, 0, 0.0001)
+            glVertex3f(0, 0, length / 2)
             glEnd()
             glPopMatrix()
     
@@ -116,8 +126,7 @@ class UserSpaceship(WorldObject):
         quad = gluNewQuadric()
         gluQuadricOrientation(quad, GLU_OUTSIDE)
         self._selectColor((1, 1, 1), False)
-        # Make it face away from us
-        glRotatef(180, 0, 1, 0)
+
         gluCylinder(quad, baseRadius, 0, length, 30, 30)
         gluDeleteQuadric(quad)
 

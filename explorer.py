@@ -74,6 +74,8 @@ class UI(object):
             self.universe.userSpaceship.rotateBy(3, (0, 0, 1))
         elif key == K_d:
             self.universe.userSpaceship.rotateBy(-3, (0, 0, 1))
+        elif key == K_j:
+            self.universe.userSpaceship.jump()
 
 
     def handleMousedown(self, event):
