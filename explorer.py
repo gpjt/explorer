@@ -7,7 +7,6 @@ import pygame
 from pygame.locals import *
 
 from Dashboard import Dashboard
-from RotationHandler import RotationHandler
 from Universe import Universe
 from Utils import LoadTexture
 

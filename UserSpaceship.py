@@ -3,7 +3,6 @@ import math
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from RotationHandler import RotationHandler
 from WorldObject import WorldObject
 
 
